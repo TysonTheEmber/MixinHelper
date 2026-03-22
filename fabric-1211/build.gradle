@@ -1,0 +1,37 @@
+plugins {
+    id 'mixinhelper.loader'
+    id 'fabric-loom'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.property('minecraft_version_1211')}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${rootProject.property('parchment_mc_1211')}:${rootProject.property('parchment_version_1211')}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.property('fabric_loader_version')}"
+}
+
+loom {
+    mixin {
+        defaultRefmapName = 'mixinhelper.refmap.json'
+    }
+    runs {
+        client {
+            client()
+            setConfigName('Fabric 1.21.1 Client')
+            ideConfigGenerated(true)
+            runDir('runs/fabric-1211-client')
+        }
+        server {
+            server()
+            setConfigName('Fabric 1.21.1 Server')
+            ideConfigGenerated(true)
+            runDir('runs/fabric-1211-server')
+        }
+    }
+}

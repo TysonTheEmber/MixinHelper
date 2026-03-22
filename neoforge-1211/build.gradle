@@ -1,0 +1,38 @@
+plugins {
+    id 'mixinhelper.loader'
+    id 'net.neoforged.moddev'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge {
+    version = rootProject.property('neoforge_version_1211')
+
+    parchment {
+        minecraftVersion = rootProject.property('parchment_mc_1211')
+        mappingsVersion = rootProject.property('parchment_version_1211')
+    }
+
+    runs {
+        configureEach {
+            programArgument '--mixin.config'
+            programArgument 'mixinhelper.mixins.json'
+        }
+        client {
+            client()
+            ideName = 'NeoForge 1.21.1 Client'
+        }
+        server {
+            server()
+            ideName = 'NeoForge 1.21.1 Server'
+        }
+    }
+
+    mods {
+        "${rootProject.property('mod_id')}" {
+            sourceSet sourceSets.main
+        }
+    }
+}

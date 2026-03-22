@@ -1,0 +1,48 @@
+plugins {
+    id 'mixinhelper.loader'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+legacyForge {
+    version = rootProject.property('forge_version_1201')
+
+    parchment {
+        minecraftVersion = rootProject.property('parchment_mc_1201')
+        mappingsVersion = rootProject.property('parchment_version_1201')
+    }
+
+    runs {
+        configureEach {
+            // Register mixin config for dev runs via program args
+            // Mixin reads --mixin.config as a program arg, NOT as a -D system property
+            programArgument '--mixin.config'
+            programArgument 'mixinhelper.mixins.json'
+        }
+        client {
+            client()
+            ideName = 'Forge 1.20.1 Client'
+        }
+        server {
+            server()
+            ideName = 'Forge 1.20.1 Server'
+        }
+    }
+
+    mods {
+        "${rootProject.property('mod_id')}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+            'MixinConfigs': 'mixinhelper.mixins.json'
+        ])
+    }
+}

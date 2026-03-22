@@ -1,0 +1,34 @@
+// Convention plugin applied by each loader subproject.
+// Adds common sources into the loader's main source set so common code
+// compiles in each loader context with the mixin library on the classpath.
+
+def commonMain = project(':common').sourceSets.main
+
+sourceSets.main {
+    java {
+        srcDir commonMain.java.srcDirs
+    }
+    resources {
+        srcDir commonMain.resources.srcDirs
+    }
+}
+
+// Token replacement in resource files
+processResources {
+    def expandProps = [
+        'mod_id'         : rootProject.property('mod_id'),
+        'mod_name'       : rootProject.property('mod_name'),
+        'mod_version'    : rootProject.property('mod_version'),
+        'mod_license'    : rootProject.property('mod_license'),
+        'mod_authors'    : rootProject.property('mod_authors'),
+        'mod_description': rootProject.property('mod_description'),
+    ]
+    inputs.properties(expandProps)
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'fabric.mod.json', 'pack.mcmeta']) {
+        expand(expandProps)
+    }
+}
+
+group = rootProject.property('group')
+version = rootProject.property('mod_version')
+base.archivesName = rootProject.property('mod_id')
