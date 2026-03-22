@@ -1,0 +1,124 @@
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish-mod:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Forge 1.20.1
+            subproject: forge-1201
+            gradle_task: ":forge-1201:build"
+            jar_glob: "forge-1201/build/libs/mixinhelper-*-all.jar"
+            mc_version: "1.20.1"
+            loader: forge
+
+          - name: Fabric 1.20.1
+            subproject: fabric-1201
+            gradle_task: ":fabric-1201:build"
+            jar_glob: "fabric-1201/build/libs/mixinhelper-*.jar"
+            mc_version: "1.20.1"
+            loader: fabric
+
+          - name: NeoForge 1.21.1
+            subproject: neoforge-1211
+            gradle_task: ":neoforge-1211:build"
+            jar_glob: "neoforge-1211/build/libs/mixinhelper-*.jar"
+            mc_version: "1.21.1"
+            loader: neoforge
+
+          - name: Fabric 1.21.1
+            subproject: fabric-1211
+            gradle_task: ":fabric-1211:build"
+            jar_glob: "fabric-1211/build/libs/mixinhelper-*.jar"
+            mc_version: "1.21.1"
+            loader: fabric
+
+    name: Publish ${{ matrix.name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION=$(grep -oP '^mod_version=\K.*' gradle.properties)
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using version: $VERSION"
+
+      - name: Build ${{ matrix.name }}
+        run: ./gradlew ${{ matrix.gradle_task }} -Pmod_version=${{ steps.version.outputs.version }} --no-daemon
+
+      - name: Resolve jar path
+        id: jar
+        run: |
+          shopt -s nullglob
+          JARS=()
+          for f in ${{ matrix.jar_glob }}; do
+            basename="$(basename "$f")"
+            if [[ "$basename" != *-sources.jar ]] && \
+               [[ "$basename" != *-javadoc.jar ]] && \
+               [[ "$basename" != *-dev.jar ]] && \
+               [[ "$basename" != *-shadow.jar ]] && \
+               [[ "$basename" != *-slim.jar ]]; then
+              JARS+=("$f")
+            fi
+          done
+          if [[ ${#JARS[@]} -eq 0 ]]; then
+            echo "::error::No jar found matching ${{ matrix.jar_glob }}"
+            echo "All jars under build/libs:"
+            find . -path '*/build/libs/*.jar' -print
+            exit 1
+          fi
+          if [[ ${#JARS[@]} -gt 1 ]]; then
+            echo "::error::Multiple jars found matching ${{ matrix.jar_glob }}:"
+            printf '  %s\n' "${JARS[@]}"
+            echo "All jars under build/libs:"
+            find . -path '*/build/libs/*.jar' -print
+            exit 1
+          fi
+          JAR="${JARS[0]}"
+          echo "jar_path=$JAR" >> "$GITHUB_OUTPUT"
+          echo "Resolved jar: $JAR"
+
+      - name: Publish ${{ matrix.name }}
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: mixin-helper
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: "1492883"
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: ${{ steps.jar.outputs.jar_path }}
+          name: "Mixin Helper ${{ steps.version.outputs.version }} (${{ matrix.name }})"
+          version: ${{ steps.version.outputs.version }}+${{ matrix.subproject }}
+          version-type: release
+          changelog-file: CHANGELOG.md
+          game-versions: ${{ matrix.mc_version }}
+          loaders: ${{ matrix.loader }}
