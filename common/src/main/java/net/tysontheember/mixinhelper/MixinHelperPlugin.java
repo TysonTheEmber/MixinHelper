@@ -27,10 +27,18 @@ public class MixinHelperPlugin implements IMixinConfigPlugin {
     public void onLoad(String mixinPackage) {
         Log.info("Initializing Mixin Helper...");
 
+        // Print startup warning banner
+        for (String line : MixinHelperConstants.STARTUP_WARNING) {
+            Log.warn(line);
+        }
+
         // 1. Load config from disk
         Path configPath = MixinHelperConfig.findConfigPath();
         MixinHelperConfig config = MixinHelperConfig.load(configPath);
         MixinHelperConfig.INSTANCE = config;
+
+        // Validate config against guardrails (early warning)
+        Guardrails.validateConfig(config);
 
         if (!config.enabled) {
             Log.info("Mixin Helper is disabled via config.");

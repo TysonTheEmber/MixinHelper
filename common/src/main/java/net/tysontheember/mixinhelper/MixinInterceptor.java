@@ -26,6 +26,7 @@ public class MixinInterceptor {
             return;
         }
 
+        Log.warn("Applying mixin modifications — if you experience issues, disable Mixin Helper and test without it before reporting bugs to other mod authors.");
         Log.info("Found " + configs.size() + " mixin config(s) for blacklist/priority processing.");
 
         for (Object configWrapper : configs) {

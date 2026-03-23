@@ -21,6 +21,9 @@ public class MixinHelperConfig {
 
     public static MixinHelperConfig INSTANCE;
 
+    @SerializedName("_WARNING")
+    public String warning = "USE AT YOUR OWN RISK. Incorrect use can cause crashes, broken mods, and world corruption. Back up your worlds. Do NOT report bugs to mod authors if you have modified their mixins with this tool.";
+
     @SerializedName("enabled")
     public boolean enabled = true;
 
@@ -38,6 +41,9 @@ public class MixinHelperConfig {
 
     @SerializedName("debug")
     public DebugConfig debug = new DebugConfig();
+
+    @SerializedName("guardrails")
+    public GuardrailsConfig guardrails = new GuardrailsConfig();
 
     public static class BlacklistConfig {
         @SerializedName("mixins")
@@ -102,6 +108,20 @@ public class MixinHelperConfig {
         public boolean logMethodRemovals = true;
     }
 
+    public static class GuardrailsConfig {
+        @SerializedName("enabled")
+        public boolean enabled = true;
+
+        @SerializedName("bypassProtectedClasses")
+        public boolean bypassProtectedClasses = false;
+
+        @SerializedName("additionalProtectedPatterns")
+        public List<String> additionalProtectedPatterns = new ArrayList<>();
+
+        @SerializedName("excludeFromProtection")
+        public List<String> excludeFromProtection = new ArrayList<>();
+    }
+
     public static MixinHelperConfig load(Path configPath) {
         if (!Files.exists(configPath)) {
             MixinHelperConfig defaults = new MixinHelperConfig();
@@ -127,6 +147,9 @@ public class MixinHelperConfig {
             if (config.priorities.mixinConfigPriorities == null) config.priorities.mixinConfigPriorities = new HashMap<>();
             if (config.priorities.mixinPriorities == null) config.priorities.mixinPriorities = new HashMap<>();
             if (config.methodRemovals.rules == null) config.methodRemovals.rules = new ArrayList<>();
+            if (config.guardrails == null) config.guardrails = new GuardrailsConfig();
+            if (config.guardrails.additionalProtectedPatterns == null) config.guardrails.additionalProtectedPatterns = new ArrayList<>();
+            if (config.guardrails.excludeFromProtection == null) config.guardrails.excludeFromProtection = new ArrayList<>();
             Log.info("Loaded config from " + configPath);
             return config;
         } catch (JsonSyntaxException e) {

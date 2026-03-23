@@ -40,10 +40,21 @@ public class PluginWrapper implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         // Target-class blacklisting
         if (config.blacklist.targetClasses.contains(targetClassName)) {
-            if (config.debug.logBlacklistActions) {
-                Log.info("Blocked mixin " + mixinClassName + " targeting blacklisted class: " + targetClassName);
+            // Guardrail check: is this a protected class?
+            // If protected and not bypassed, we should NOT block the mixin (let it apply).
+            if (!Guardrails.checkTargetClass(targetClassName,
+                    "Blocking all mixins targeting class via blacklist.targetClasses", config)) {
+                if (config.debug.logBlacklistActions) {
+                    Log.warn("Guardrail prevented blacklisting of mixins targeting protected class: "
+                            + targetClassName + " (mixin " + mixinClassName + " will still be applied)");
+                }
+                // Fall through — do NOT return false
+            } else {
+                if (config.debug.logBlacklistActions) {
+                    Log.info("Blocked mixin " + mixinClassName + " targeting blacklisted class: " + targetClassName);
+                }
+                return false;
             }
-            return false;
         }
 
         // Check if this specific mixin is blacklisted (catches any that weren't

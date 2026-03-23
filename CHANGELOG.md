@@ -1,1 +1,15 @@
-initial version
+### Added
+- **Guardrails system** to prevent accidental modifications to critical classes that could corrupt worlds or crash the JVM
+  - Protects chunk generation classes (`ChunkGenerator`, `NoiseBasedChunkGenerator`, `WorldGenRegion`, `LevelChunk`, `ChunkStatus`)
+  - Protects palette container classes (`PalettedContainer`, `LinearPalette`, `HashMapPalette`, `Palette`)
+  - Protects mixin system internals (`org.spongepowered.asm.*`)
+  - Protects JVM/classloader internals (`java.lang.ClassLoader`, `sun.misc.Unsafe`, `jdk.internal.*`)
+  - Protects threading classes (`BlockableEventLoop`, `TickTask`)
+  - Protects world persistence classes (`LevelStorageSource`, `net.minecraft.nbt.*`, `LevelData`)
+- New `guardrails` config section with:
+  - `enabled` — master toggle (default: `true`)
+  - `bypassProtectedClasses` — override protection at your own risk (default: `false`)
+  - `additionalProtectedPatterns` — add your own protected class prefixes
+  - `excludeFromProtection` — selectively unprotect specific classes (requires bypass)
+- Early config validation logs warnings at startup when protected classes are referenced
+- Guardrails block target-class blacklisting and method removal/nop on protected classes by default

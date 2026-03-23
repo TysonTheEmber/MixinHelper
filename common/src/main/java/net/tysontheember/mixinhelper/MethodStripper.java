@@ -30,6 +30,14 @@ public final class MethodStripper {
                 continue;
             }
 
+            // Guardrail check: refuse to strip methods on protected classes
+            if (!Guardrails.checkTargetClass(rule.targetClass,
+                    "Method " + (rule.action != null ? rule.action : "nop")
+                    + " on method '" + (rule.method != null ? rule.method : rule.methodPattern) + "'",
+                    config)) {
+                continue;
+            }
+
             applyRule(targetClass, targetClassName, rule, config.debug);
         }
     }
