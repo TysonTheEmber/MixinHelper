@@ -6,6 +6,7 @@ body:
     attributes:
       value: |
         Need help with MixinHelper? Ask your question below.
+        Check the [documentation](https://tysontheember.dev/mixin-helper/intro/) first - your answer might already be there!
 
   - type: textarea
     id: question
